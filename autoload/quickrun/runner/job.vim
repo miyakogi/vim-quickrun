@@ -40,6 +40,18 @@ function! s:runner.shellescape(str) abort
   return shellescape(a:str)
 endfunction
 
+function! s:runner.validate() abort
+  if !(has('timers') && has('job') && has('channel'))
+    throw 'Needs channel, job, and timer.'
+  endif
+  " is there any better way to chack partial support?
+  try
+    call function('abs', [1])
+  catch /^Vim\%((\a\+)\)\=:E118/
+    throw 'Needs partial (second and third arguments for `function()`).'
+  endtry
+endfunction
+
 function! s:runner.run(commands, input, session) abort
   let l:options = deepcopy(s:job_options)
   let l:options['callback'] = function('s:callback', [a:session])
