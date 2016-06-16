@@ -4,16 +4,15 @@ augroup END
 
 let s:runner = {}
 let s:job_options = {
-      \ 'in_mode': 'nl',
       \ 'out_mode': 'nl',
       \ 'err_mode': 'nl',
       \ }
 
-function! s:runner.receive_result(session, ch, msg) abort
+function! s:callback(session, ch, msg) abort
   call a:session.output(a:msg . "\n")
 endfunction
 
-function! s:runner.close_cb(session, ch) abort
+function! s:close_cb(session, ch) abort
   if ch_status(a:ch) ==# 'buffered'
     call a:session.output(ch_read(a:ch))
   endif
@@ -29,14 +28,14 @@ endfunction
 
 function! s:runner.run(commands, input, session) abort
   let l:options = deepcopy(s:job_options)
-  let key = a:session.continue()
-  let l:options['callback'] = function(s:runner.receive_result, [a:session])
-  " let l:options['out_cb'] = function(s:runner.receive_result, [a:session])
-  " let l:options['err_cb'] = function(s:runner.receive_result, [a:session])
-  let l:options['close_cb'] = function(s:runner.close_cb, [a:session])
+  let l:options['callback'] = function('s:callback', [a:session])
+  " let l:options['out_cb'] = function('s:callback', [a:session])
+  " let l:options['err_cb'] = function('s:callback', [a:session])
+  let l:options['close_cb'] = function('s:close_cb', [a:session])
   let cmd = split(substitute(a:commands[0], "'", '', 'g'))
   " echomsg string(cmd)
   let a:session._job =  job_start(cmd, l:options)
+  call a:session.continue()
 endfunction
 
 function! quickrun#runner#job#new() abort
